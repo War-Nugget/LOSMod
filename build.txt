@@ -1,0 +1,3 @@
+displayName = LineofSight
+author = Nugget
+version = 0.1
