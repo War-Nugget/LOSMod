@@ -1,16 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<!-- Import tModLoader mod properties -->
-	<Import Project="..\tModLoader.targets" />
+  <!-- Import tModLoader mod properties -->
+  <Import Project="..\tModLoader.targets" />
 
-	<!-- General -->
-	<PropertyGroup>
-		
-	</PropertyGroup>
+  <!-- General -->
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
 
-	<!-- References -->
-	<ItemGroup>
-		
-	</ItemGroup>
+  <!-- References -->
+  <ItemGroup>
+    <Reference Include="tModLoader">
+      <HintPath>$(tMLSteamDir)\tModLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="Terraria">
+      <HintPath>$(tMLSteamDir)\Terraria.dll</HintPath>
+    </Reference>
+    <Reference Include="tModLoader.HookGen">
+      <HintPath>$(tMLSteamDir)\HookGen.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
 </Project>
