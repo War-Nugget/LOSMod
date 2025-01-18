@@ -12,6 +12,7 @@ namespace LOSMod
             if (tile != null && tile.HasTile)
             {
                 return Main.tileSolid[tile.TileType];
+                
             }
             return false;
         }

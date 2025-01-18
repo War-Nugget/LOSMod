@@ -1,37 +1,63 @@
 using Terraria.ModLoader;
 using Terraria;
+using Microsoft.Xna.Framework;
+
 
 namespace LOSMod
 {
     public class LOS : Mod
     {
+        private ModKeybind toggleDebugKey;
+
         public override void Load()
         {
+            base.Load();
+
+            // Hook into chat input
+            On.Terraria.Main.DoChatInput += (orig) =>
+            {
+                orig();
+
+                if (Main.chatText.StartsWith("/toggle_debug"))
+                {
+                    // Toggle debug mode
+                    TileBlackoutSystem.DebugMode = !TileBlackoutSystem.DebugMode;
+                    Main.NewText($"Debug mode {(TileBlackoutSystem.DebugMode ? "enabled" : "disabled")}", 255, 255, 0);
+
+                    // Clear the chat input
+                    Main.chatText = "";
+                }
+            };
+
+            // Register a keybind for toggling debug mode
+            toggleDebugKey = KeybindLoader.RegisterKeybind(this, "Toggle Debug Mode", Microsoft.Xna.Framework.Input.Keys.F12);
+
             Logger.Info("Line of Sight Mod Loaded");
         }
 
         public override void Unload()
         {
+            base.Unload();
+
+            // Clean up keybind references
+            toggleDebugKey = null;
             Logger.Info("Line of Sight Mod Unloaded");
         }
 
-        public override void AddRecipes()
+        public override void UpdateInput()
         {
-            // Add a custom chat command for debugging
-            On.Terraria.Main.DoChatInput += (orig) =>
+            // Check if the debug toggle keybind was pressed
+            if (toggleDebugKey.JustPressed)
             {
-                orig(); // Call the original method
+                ToggleDebugMode();
+            }
+        }
 
-                // Check if the player typed "/toggle_debug"
-                if (Main.chatText.StartsWith("/toggle_debug"))
-                {
-                    TileBlackoutSystem.DebugMode = !TileBlackoutSystem.DebugMode;
-                    Main.NewText($"Debug mode {(TileBlackoutSystem.DebugMode ? "enabled" : "disabled")}", 255, 255, 0);
-
-                    // Clear the chat text after the command
-                    Main.chatText = "";
-                }
-            };
+        private void ToggleDebugMode()
+        {
+            // Toggle the debug mode
+            TileBlackoutSystem.DebugMode = !TileBlackoutSystem.DebugMode;
+            Main.NewText($"Debug mode {(TileBlackoutSystem.DebugMode ? "enabled" : "disabled")}", 255, 255, 0);
         }
     }
 }

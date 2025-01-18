@@ -10,7 +10,7 @@ namespace LOSMod
 {
     public static class TileBlackoutSystem
     {
-        public static bool DebugMode = false; // Set to true to enable debug visuals
+        public static bool DebugMode = true; // Set to true to enable debug visuals
 
         private static Texture2D magicPixel;
 
