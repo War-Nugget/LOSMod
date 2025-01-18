@@ -1,8 +1,8 @@
 using Terraria;
-using Microsoft.Xna.Framework;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework.Graphics;
-using Terraria.DataStructures;
+// using Terraria.DataStructures;
+// using Microsoft.Xna.Framework;
 
 namespace LOSMod
 {

@@ -13,10 +13,8 @@ namespace LOSMod
         {
             base.Load();
 
-            // Hook into chat input
-            On.Terraria.Main.DoChatInput += (orig) =>
+    
             {
-                orig();
 
                 if (Main.chatText.StartsWith("/toggle_debug"))
                 {
@@ -35,23 +33,15 @@ namespace LOSMod
             Logger.Info("Line of Sight Mod Loaded");
         }
 
-        public override void Unload()
-        {
-            base.Unload();
+        // public override void Unload()
+        // {
+        //     base.Unload();
 
-            // Clean up keybind references
-            toggleDebugKey = null;
-            Logger.Info("Line of Sight Mod Unloaded");
-        }
+        //     // Clean up keybind references
+        //     toggleDebugKey = null;
+        //     Logger.Info("Line of Sight Mod Unloaded");
+        // }
 
-        public override void UpdateInput()
-        {
-            // Check if the debug toggle keybind was pressed
-            if (toggleDebugKey.JustPressed)
-            {
-                ToggleDebugMode();
-            }
-        }
 
         private void ToggleDebugMode()
         {

@@ -12,13 +12,13 @@
   <!-- References -->
   <ItemGroup>
     <Reference Include="tModLoader">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\tModLoader\tModLoader.dll</HintPath>
+      <HintPath>$(tMLSteamDir)\tModLoader.dll</HintPath>
     </Reference>
     <Reference Include="Terraria">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\tModLoader\Terraria.dll</HintPath>
+      <HintPath>$(tMLSteamDir)\Terraria.dll</HintPath>
     </Reference>
-    <Reference Include="TerrariaHooks">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\tModLoader\Libraries\TerrariaHooks\TerrariaHooks.dll</HintPath>
+    <Reference Include="tModLoader.HookGen">
+      <HintPath>$(tMLSteamDir)\HookGen.dll</HintPath>
     </Reference>
   </ItemGroup>
 
