@@ -18,6 +18,7 @@ namespace LOSMod
 
                 if (Main.chatText.StartsWith("/toggle_debug"))
                 {
+                    Main.NewText("Debug mode toggled");
                     // Toggle debug mode
                     TileBlackoutSystem.DebugMode = !TileBlackoutSystem.DebugMode;
                     Main.NewText($"Debug mode {(TileBlackoutSystem.DebugMode ? "enabled" : "disabled")}", 255, 255, 0);
@@ -27,7 +28,8 @@ namespace LOSMod
                 }
             };
 
-            // Register a keybind for toggling debug mode
+            // Register a keybind for toggling debug ]
+            mode
             toggleDebugKey = KeybindLoader.RegisterKeybind(this, "Toggle Debug Mode", Microsoft.Xna.Framework.Input.Keys.F12);
 
             Logger.Info("Line of Sight Mod Loaded");
