@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ModLoader;
 using Terraria.GameInput;
 using Microsoft.Xna.Framework.Graphics;
+using Terraria.DataStructures;
 
 namespace LOSMod
 {
@@ -17,16 +18,10 @@ namespace LOSMod
                 blackTexture = new RenderTarget2D(Main.instance.GraphicsDevice, Main.screenWidth, Main.screenHeight);
             }
         }
-
-        public override void PostUpdate()
+        public override void ModifyDrawInfo(ref PlayerDrawSet drawInfo)
         {
-            // Ensure blackout texture is properly initialized
-            EnsureBlackTexture();
-
-            // Debug: Confirm if this method is running
-            if (!Main.dedServ) // Ensure this only runs on the client
+            if (TileBlackoutSystem.DebugMode && !Main.dedServ)
             {
-                Main.NewText("Calling DrawBlackout()", 255, 255, 0);
                 TileBlackoutSystem.DrawBlackout(this);
             }
         }
