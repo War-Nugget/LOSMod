@@ -1,13 +1,16 @@
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework.Input;
 
+
 namespace LOSMod
 {
     public class LOS : Mod
     {
         public static LOS Instance { get; private set; } // Ensure a static instance
 
+
         public ModKeybind toggleDebugKey;
+
 
         public override void Load()
         {
@@ -15,6 +18,7 @@ namespace LOSMod
             toggleDebugKey = KeybindLoader.RegisterKeybind(this, "Toggle Debug Mode", Keys.F12);
             Logger.Info("Line of Sight Mod Loaded");
         }
+
 
         public override void Unload()
         {
@@ -24,3 +28,6 @@ namespace LOSMod
         }
     }
 }
+
+
+

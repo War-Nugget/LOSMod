@@ -4,11 +4,13 @@ using Terraria.GameInput;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria.DataStructures;
 
+
 namespace LOSMod
 {
     public class LOSPlayer : ModPlayer
     {
         public RenderTarget2D blackTexture;
+
 
         private void EnsureBlackTexture()
         {
@@ -27,11 +29,14 @@ namespace LOSMod
         }
 
 
+
+
         public override void Unload()
         {
             blackTexture?.Dispose();
             blackTexture = null;
         }
+
 
         public override void ProcessTriggers(TriggersSet triggersSet)
         {
@@ -41,11 +46,13 @@ namespace LOSMod
                 Main.chatText = "";
             }
 
+
             if (LOS.Instance != null && LOS.Instance.toggleDebugKey.JustPressed)
             {
                 ToggleDebugMode();
             }
         }
+
 
         private void ToggleDebugMode()
         {
@@ -53,5 +60,9 @@ namespace LOSMod
             Main.NewText($"Debug mode is now {(TileBlackoutSystem.DebugMode ? "ENABLED" : "DISABLED")}", 255, 255, 0);
         }
 
+
     }
 }
+
+
+
