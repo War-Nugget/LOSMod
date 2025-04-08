@@ -2,11 +2,8 @@
 using Terraria;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Terraria.DataStructures;
 using System;
 using System.Collections.Generic;
-using Terraria.ID;
-
 
 namespace LOSMod
 {
@@ -14,111 +11,136 @@ namespace LOSMod
     {
         public static bool DebugMode = true;
         private static Texture2D magicPixel;
-
+        private static RenderTarget2D blackoutTarget;
+        private static SpriteBatch privateBatch;
 
         public static HashSet<Point> VisibleTiles { get; private set; } = new();
-
+        public static HashSet<Point> OccludedTiles { get; private set; } = new();
 
         public static void Unload()
         {
             magicPixel?.Dispose();
+            blackoutTarget?.Dispose();
+            privateBatch?.Dispose();
             magicPixel = null;
+            blackoutTarget = null;
+            privateBatch = null;
             VisibleTiles.Clear();
+            OccludedTiles.Clear();
         }
 
-
-        private static void EnsureMagicPixel()
+        private static void EnsureResources()
         {
             if (magicPixel == null)
             {
                 magicPixel = new Texture2D(Main.instance.GraphicsDevice, 1, 1);
                 magicPixel.SetData(new[] { Color.White });
             }
-        }
 
+            if (blackoutTarget == null || blackoutTarget.Width != Main.screenWidth || blackoutTarget.Height != Main.screenHeight)
+            {
+                blackoutTarget?.Dispose();
+                blackoutTarget = new RenderTarget2D(Main.instance.GraphicsDevice, Main.screenWidth, Main.screenHeight);
+            }
+
+            if (privateBatch == null)
+            {
+                privateBatch = new SpriteBatch(Main.instance.GraphicsDevice);
+            }
+        }
 
         private static bool IsOutOfBounds(Point tilePos)
         {
             return tilePos.X < 0 || tilePos.Y < 0 || tilePos.X >= Main.maxTilesX || tilePos.Y >= Main.maxTilesY;
         }
 
-
-        public static bool IsVisible(int x, int y) => VisibleTiles.Contains(new Point(x, y));
-
-
         public static void DrawBlackout(LOSPlayer player)
         {
-            if (!DebugMode) return;
+            if (!DebugMode || Main.dedServ || Main.gameMenu) return;
 
-
-            EnsureMagicPixel();
-            var spriteBatch = Main.spriteBatch;
+            EnsureResources();
             VisibleTiles.Clear();
+            OccludedTiles.Clear();
 
+            int rayCount = 720;
+            float maxDistance = 30f;
+            float rayStep = 0.25f; // finer resolution for smoother shadow shape
+            Vector2 origin = player.Player.Center / 16f;
 
-            int rayCount = 360;
-            float maxDistance = 20f;
-            Vector2 playerTilePos = player.Player.Center / 16f;
-
-
-            // Scan for visible tiles
             for (int i = 0; i < rayCount; i++)
             {
-                float angle = MathHelper.ToRadians(i * (360f / rayCount));
+                float angle = MathHelper.TwoPi * i / rayCount; // better than radians(360/rayCount)
                 Vector2 direction = new((float)Math.Cos(angle), (float)Math.Sin(angle));
+                bool blocked = false;
 
-
-                for (float distance = 0; distance < maxDistance; distance += 0.5f)
+                for (float d = 0f; d < maxDistance; d += rayStep)
                 {
-                    Vector2 currentPos = playerTilePos + direction * distance;
-                    Point tilePos = currentPos.ToPoint();
+                    Vector2 pos = origin + direction * d;
+                    Point tile = pos.ToPoint(); // preserves finer granularity
 
+                    if (IsOutOfBounds(tile)) break;
 
-                    if (IsOutOfBounds(tilePos)) break;
-
-
-                    if (LOSUtils.IsTileBlockingView(tilePos.X, tilePos.Y))
+                    if (!blocked)
                     {
-                        Vector2 tileScreenPos = tilePos.ToVector2() * 16 - Main.screenPosition;
-                        spriteBatch.Draw(magicPixel, new Rectangle((int)tileScreenPos.X, (int)tileScreenPos.Y, 16, 16), Color.Red);
-                        break;
+                        if (LOSUtils.IsTileBlockingView(tile.X, tile.Y))
+                        {
+                            blocked = true;
+                            VisibleTiles.Add(tile); // ✅ first blocking tile is visible
+                            continue;
+                        }
+                        VisibleTiles.Add(tile);
                     }
-
-
-                    VisibleTiles.Add(tilePos);
-
-
-                    Vector2 debugScreenPos = currentPos * 16 - Main.screenPosition;
-                    // spriteBatch.Draw(magicPixel, new Rectangle((int)debugScreenPos.X, (int)debugScreenPos.Y, 4, 4), Color.Yellow);
+                    else
+                    {
+                        OccludedTiles.Add(tile);
+                    }
                 }
             }
 
+            var device = Main.instance.GraphicsDevice;
+            device.SetRenderTarget(blackoutTarget);
+            device.Clear(Color.Transparent);
 
-            // Fill entire screen width in tiles for blackout
-            int tileStartX = (int)(Main.screenPosition.X / 16f) - 1;
-            int tileEndX = (int)((Main.screenPosition.X + Main.screenWidth) / 16f) + 1;
-            int tileStartY = (int)(Main.screenPosition.Y / 16f) - 1;
-            int tileEndY = (int)((Main.screenPosition.Y + Main.screenHeight) / 16f) + 1;
+            privateBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
 
+            int startX = (int)(Main.screenPosition.X / 16f) - 1;
+            int endX = (int)((Main.screenPosition.X + Main.screenWidth) / 16f) + 1;
+            int startY = (int)(Main.screenPosition.Y / 16f) - 1;
+            int endY = (int)((Main.screenPosition.Y + Main.screenHeight) / 16f) + 1;
 
-            for (int x = tileStartX; x <= tileEndX; x++)
+            for (int x = startX; x <= endX; x++)
             {
-                for (int y = tileStartY; y <= tileEndY; y++)
+                for (int y = startY; y <= endY; y++)
                 {
-                    Point tilePos = new(x, y);
-                    if (IsOutOfBounds(tilePos)) continue;
-                    if (VisibleTiles.Contains(tilePos)) continue;
+                    Point tile = new(x, y);
+                    if (IsOutOfBounds(tile)) continue;
 
+                    if (!VisibleTiles.Contains(tile))
+                    {
+                        Vector2 screenPos = tile.ToVector2() * 16 - Main.screenPosition;
+                        Rectangle rect = new((int)screenPos.X, (int)screenPos.Y, 16, 16);
 
-                    Vector2 blackoutScreenPos = tilePos.ToVector2() * 16 - Main.screenPosition;
-                    spriteBatch.Draw(magicPixel, new Rectangle((int)blackoutScreenPos.X, (int)blackoutScreenPos.Y, 16, 16), new Color(0, 0, 0, 180));
+                        // Distance from player in tiles
+                        float distance = Vector2.Distance(tile.ToVector2(), origin);
+                        float fade = MathHelper.Clamp(distance / maxDistance, 0f, 1f);
+                        int alpha = (int)MathHelper.Lerp(100f, 255f, fade);
+                        Color shade = new Color(0, 0, 0, alpha);
+
+                        privateBatch.Draw(magicPixel, rect, shade);
+                    }
                 }
             }
+
+            privateBatch.End();
+            device.SetRenderTarget(null);
         }
+
+
+        public static void DrawFinalOverlay(SpriteBatch spriteBatch)
+        {
+            if (!DebugMode || Main.dedServ || Main.gameMenu || blackoutTarget == null) return;
+            spriteBatch.Draw(blackoutTarget, Vector2.Zero, Color.White);
+        }
+
     }
 }
-
-
-
-
-

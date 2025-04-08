@@ -11,7 +11,6 @@ namespace LOSMod
     {
         public RenderTarget2D blackTexture;
 
-
         private void EnsureBlackTexture()
         {
             if (blackTexture == null || blackTexture.Width != Main.screenWidth || blackTexture.Height != Main.screenHeight)
@@ -20,21 +19,19 @@ namespace LOSMod
                 blackTexture = new RenderTarget2D(Main.instance.GraphicsDevice, Main.screenWidth, Main.screenHeight);
             }
         }
-        public override void ModifyDrawInfo(ref PlayerDrawSet drawInfo)
-        {
-            if (TileBlackoutSystem.DebugMode && !Main.dedServ)
-            {
-                TileBlackoutSystem.DrawBlackout(this);
-            }
-        }
-
-
-
 
         public override void Unload()
         {
             blackTexture?.Dispose();
             blackTexture = null;
+        }
+
+        public override void PreUpdate()
+        {
+            if (TileBlackoutSystem.DebugMode && !Main.dedServ)
+            {
+                TileBlackoutSystem.DrawBlackout(this); // Prepares blackoutTarget
+            }
         }
 
 
