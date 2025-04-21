@@ -16,6 +16,7 @@ namespace LOSMod
 
         public static HashSet<Point> VisibleTiles { get; private set; } = new();
         public static HashSet<Point> OccludedTiles { get; private set; } = new();
+        private static RenderTarget2D lightingTarget;
 
         public static void Unload()
         {
@@ -37,6 +38,12 @@ namespace LOSMod
                 magicPixel.SetData(new[] { Color.White });
             }
 
+            if (lightingTarget == null || lightingTarget.Width != Main.screenWidth || lightingTarget.Height != Main.screenHeight)
+            {
+                lightingTarget?.Dispose();
+                lightingTarget = new RenderTarget2D(Main.instance.GraphicsDevice, Main.screenWidth, Main.screenHeight);
+            }
+
             if (blackoutTarget == null || blackoutTarget.Width != Main.screenWidth || blackoutTarget.Height != Main.screenHeight)
             {
                 blackoutTarget?.Dispose();
@@ -48,6 +55,14 @@ namespace LOSMod
                 privateBatch = new SpriteBatch(Main.instance.GraphicsDevice);
             }
         }
+
+        private static readonly BlendState MultiplyBlend = new BlendState
+        {
+            ColorSourceBlend = Blend.DestinationColor,
+            ColorDestinationBlend = Blend.Zero,
+            ColorBlendFunction = BlendFunction.Add
+        };
+
 
         private static bool IsOutOfBounds(Point tilePos)
         {
@@ -136,10 +151,77 @@ namespace LOSMod
         }
 
 
+
+        
+// FIX THIS BLOCK  ---------------------------------------------------------------------------------------------------
         public static void DrawFinalOverlay(SpriteBatch spriteBatch)
         {
-            if (!DebugMode || Main.dedServ || Main.gameMenu || blackoutTarget == null) return;
-            spriteBatch.Draw(blackoutTarget, Vector2.Zero, Color.White);
+            if (!DebugMode || Main.dedServ || Main.gameMenu) return;
+
+            EnsureResources();
+            EnsureRadialTexture();
+
+            var device = Main.instance.GraphicsDevice;
+
+            // Draw blackout and radial light into a render target
+            device.SetRenderTarget(lightingTarget);
+            device.Clear(Color.Transparent);
+
+            privateBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+
+            // Fill screen with solid black
+            privateBatch.Draw(magicPixel, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.Black);
+
+            // Apply radial light using Multiply
+            Vector2 playerCenter = Main.LocalPlayer.Center - Main.screenPosition;
+            Vector2 origin = new Vector2(radialLight.Width, radialLight.Height) / 2f;
+            privateBatch.End();
+
+            // 1. Fill render target with black
+            privateBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            privateBatch.Draw(magicPixel, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.Black);
+            privateBatch.End();
+
+            // 2. Apply radial light using custom multiply blend
+            privateBatch.Begin(SpriteSortMode.Immediate, MultiplyBlend); // <-- uses your custom MultiplyBlend
+            privateBatch.Draw(radialLight, playerCenter, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            privateBatch.End();
+
+
+
+            device.SetRenderTarget(null); // reset back to screen
+
+            // Now draw the lighting target to the screen
+            spriteBatch.Draw(lightingTarget, Vector2.Zero, Color.White);
+        }
+
+
+        private static Texture2D radialLight;
+
+        private static void EnsureRadialTexture()
+        {
+            if (radialLight != null) return;
+
+            int size = 256;
+            radialLight = new Texture2D(Main.instance.GraphicsDevice, size, size);
+            Color[] data = new Color[size * size];
+            Vector2 center = new Vector2(size / 2f);
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), center) / (size / 2f);
+                    float intensity = MathHelper.Clamp(1f - dist, 0f, 1f); // <-- reversed for brightness at center
+                    intensity *= intensity; // smooth curve
+
+                    // White color with reduced intensity (black edges, white center)
+                    data[y * size + x] = new Color(intensity, intensity, intensity, 1f); // <-- alpha = 1
+
+                }
+            }
+
+            radialLight.SetData(data);
         }
 
     }
