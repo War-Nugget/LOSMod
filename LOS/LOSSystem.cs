@@ -15,17 +15,19 @@ namespace LOSMod
 
             if (mapIndex  != -1)
             {
-                layers.Insert(mapIndex , new LegacyGameInterfaceLayer(
-                    "LOSMod: Blackout Overlay",
-                    delegate
+            layers.Insert(mapIndex, new LegacyGameInterfaceLayer(
+                "LOSMod: Blackout Overlay",
+                delegate
+                {
+                    if (TileBlackoutSystem.DebugMode && !Main.gameMenu && !Main.dedServ)
                     {
-                        if (TileBlackoutSystem.DebugMode && !Main.gameMenu && !Main.dedServ)
-                        {
-                            TileBlackoutSystem.DrawFinalOverlay(Main.spriteBatch);
-                        }
-                        return true;
-                    },
-                    InterfaceScaleType.Game)
+                        TileBlackoutSystem.DrawFinalOverlay_Internal(); // draw to renderTarget
+                        TileBlackoutSystem.DrawFinalOverlayToScreen(Main.spriteBatch); // only draw the final texture here
+                    }
+                    return true;
+                },
+                InterfaceScaleType.Game)
+                
                 );
             }
         }

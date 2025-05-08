@@ -154,7 +154,7 @@ namespace LOSMod
 
         
 // FIX THIS BLOCK  ---------------------------------------------------------------------------------------------------
-        public static void DrawFinalOverlay(SpriteBatch spriteBatch)
+        public static void DrawFinalOverlay_Internal()
         {
             if (!DebugMode || Main.dedServ || Main.gameMenu) return;
 
@@ -169,8 +169,7 @@ namespace LOSMod
 
             privateBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
 
-            // Fill screen with solid black
-            privateBatch.Draw(magicPixel, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.Black);
+
 
             // Apply radial light using Multiply
             Vector2 playerCenter = Main.LocalPlayer.Center - Main.screenPosition;
@@ -190,9 +189,7 @@ namespace LOSMod
 
 
             device.SetRenderTarget(null); // reset back to screen
-
-            // Now draw the lighting target to the screen
-            spriteBatch.Draw(lightingTarget, Vector2.Zero, Color.White);
+   
         }
 
 
@@ -223,6 +220,12 @@ namespace LOSMod
 
             radialLight.SetData(data);
         }
+        public static void DrawFinalOverlayToScreen(SpriteBatch spriteBatch)
+        {
+            if (lightingTarget == null) return;
 
+            // Only use Main.spriteBatch here to copy your pre-rendered texture to the screen
+            spriteBatch.Draw(lightingTarget, Vector2.Zero, Color.White);
+        }
     }
 }
